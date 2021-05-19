@@ -14,11 +14,11 @@ comptime {
             //------------------------------------------------------------------------------
             \\ _start:
             // Infinitely wait for events (aka "park the core").
-           \\  1:	wfe
-	        \\ b	1b
+            \\  1:	wfe
+            \\      b	1b
 
             \\.size	_start, . - _start
             \\.type	_start, function
             \\.global	_start
-    )
+    );
 }
