@@ -21,7 +21,7 @@ pub fn build(b: *std.build.Builder) void {
     kernel.disable_stack_probing = true;
     kernel.setTarget(.{
         .cpu_arch = .aarch64,
-        .cpu_model = .{.explicit = &std.Target.aarch64.cpu.cortex_a72},
+        .cpu_model = .{ .explicit = &std.Target.aarch64.cpu.cortex_a72 },
         .os_tag = std.Target.Os.Tag.freestanding,
         .abi = std.Target.Abi.none,
         .cpu_features_sub = disabled_features,
@@ -37,9 +37,9 @@ pub fn build(b: *std.build.Builder) void {
     const kernel_name = "kernel8.img";
 
     const run_objcopy = b.addSystemCommand(&[_][]const u8{
-        "llvm-objcopy", kernel.getOutputPath(),
+        "llvm-objcopy",   kernel.getOutputPath(),
         "--only-section", ".text",
-        "-O",           "binary",
+        "-O",             "binary",
         kernel_name,
     });
     run_objcopy.step.dependOn(&kernel.step);

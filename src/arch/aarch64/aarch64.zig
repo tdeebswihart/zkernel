@@ -1,2 +1,1 @@
-usingnamespace registers = @import("registers");
-usingnamespace cpu = @import("cpu");
+pub const registers = @import("registers.zig");

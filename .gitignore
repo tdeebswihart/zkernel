@@ -5,3 +5,4 @@ tmp/
 
 zig-cache/
 kernel8.img
+zig-out/
