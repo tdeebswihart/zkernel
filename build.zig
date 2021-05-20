@@ -46,6 +46,19 @@ pub fn build(b: *std.build.Builder) void {
 
     b.default_step.dependOn(&run_objcopy.step);
 
+    const run_objdump = b.addSystemCommand(&[_][]const u8{
+        "llvm-objdump", kernel.getOutputPath(),
+        "--disassemble",
+        "--demangle",
+        "--section", ".text",
+        "--section", ".rodata",
+        "--section", ".got",
+    });
+    run_objdump.step.dependOn(&kernel.step);
+
+    const objdump = b.step("objdump", "Dump the kernel ELF");
+    objdump.dependOn(&run_objdump.step);
+
     const run_qemu = b.addSystemCommand(&[_][]const u8{
         "qemu-system-aarch64",
         "-d",
