@@ -1,18 +1,10 @@
-const std = @import("std");
-const arch = @import("arch.zig");
+const arch = @import("arch.zig").Arch.init();
 
 comptime {
-    asm (
-        \\.section .text.boot
-        \\_start:
-        \\   1: wfe
-        \\   b 1b
-        \\ .size _start, . - _start
-        \\ .type _start, function
-        \\ .global _start
-    );
+    _ = arch;
 }
 
+/// Kernel entrypoint
 export fn kmain() noreturn {
     unreachable;
 }
