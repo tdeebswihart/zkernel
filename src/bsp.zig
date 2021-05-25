@@ -1,1 +1,1 @@
-const std = @import("std");
+usingnamespace @import("bsp/raspberrypi.zig");

@@ -7,7 +7,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const kernel = b.addExecutable("kernel", "src/main.zig");
+    const kernel = b.addExecutable("kernel", "src/os.zig");
 
     var disabled_features = std.Target.Cpu.Feature.Set.empty;
     var enabled_feautres = std.Target.Cpu.Feature.Set.empty;

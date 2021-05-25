@@ -1,23 +1,25 @@
 const root = @import("root");
-
-extern var __bss_start: u8;
-extern var __bss_end: u8;
-extern var __end_init: u8;
-extern var boot_core_id: u8;
-
-pub fn clearBss() void {
-    @memset(@as(*volatile [1]u8, &__bss_start), 0, @ptrToInt(&__bss_end) - @ptrToInt(&__bss_start));
-}
+const as = @import("assembly.zig");
+const bsp = @import("root").bsp;
 
 comptime {
     @export(_start, .{ .name = "_start", .section = ".text._start" });
 }
 
+
 pub fn _start() callconv(.Naked) noreturn {
-    asm volatile (
-        \\   1: wfe
-        \\   b 1b
+    const core = asm volatile (
+        \\ mrs x1, MPIDR_EL1
+        \\ and x1, x1, 0b11
+            : [ret] "={x1}" (-> u64)
+            :
+            : "x1"
+
     );
+
+    if (core != bsp.cpu.BOOT_CORE) {
+        hang();
+    }
 
     if (@typeInfo(@TypeOf(root.main)).Fn.return_type != noreturn) {
         @compileError("expected return type of main to be 'noreturn'");
@@ -27,3 +29,10 @@ pub fn _start() callconv(.Naked) noreturn {
 }
 
 pub fn init() void {}
+
+// Hang forever
+pub fn hang() noreturn {
+    while (true) {
+        as.wfe();
+    }
+}

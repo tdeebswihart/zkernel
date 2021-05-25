@@ -29,7 +29,7 @@ SECTIONS
     .text :
     {
         KEEP(*(.text._start))
-        KEEP(*(.text.main))
+        KEEP(*(.text._start_args))
         *(.text*)                 /* Everything else */
     } :segment_rx
 
@@ -49,6 +49,6 @@ SECTIONS
         . = ALIGN(8);
 
         . += 8; /* Fill for the bss == 0 case, so that __bss_start <= __bss_end_inclusive holds */
-        __bss_end_inclusive = . - 8;
+        __bss_end = . - 8;
     } :NONE
 }
