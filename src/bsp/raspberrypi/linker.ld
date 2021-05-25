@@ -29,8 +29,7 @@ SECTIONS
     .text :
     {
         KEEP(*(.text._start))
-        *(.text._start_arguments) /* Constants (or statics in Rust speak) read by _start(). */
-        *(.text._start_rust)      /* The Rust entry point */
+        KEEP(*(.text.main))
         *(.text*)                 /* Everything else */
     } :segment_rx
 

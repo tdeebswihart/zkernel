@@ -7,7 +7,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const kernel = b.addExecutable("kernel", "src/kmain.zig");
+    const kernel = b.addExecutable("kernel", "src/main.zig");
 
     var disabled_features = std.Target.Cpu.Feature.Set.empty;
     var enabled_feautres = std.Target.Cpu.Feature.Set.empty;
@@ -47,12 +47,11 @@ pub fn build(b: *std.build.Builder) void {
     b.default_step.dependOn(&run_objcopy.step);
 
     const run_objdump = b.addSystemCommand(&[_][]const u8{
-        "llvm-objdump", kernel.getOutputPath(),
-        "--disassemble",
-        "--demangle",
-        "--section", ".text",
-        "--section", ".rodata",
-        "--section", ".got",
+        "llvm-objdump",  kernel.getOutputPath(),
+        "--disassemble", "--demangle",
+        "--section",     ".text",
+        "--section",     ".rodata",
+        "--section",     ".got",
     });
     run_objdump.step.dependOn(&kernel.step);
 
