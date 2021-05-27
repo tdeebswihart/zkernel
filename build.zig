@@ -1,8 +1,10 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.build.Builder) !void {
     const want_nodisplay = b.option(bool, "nodisplay", "No display for qemu") orelse false;
+    const want_monitor = b.option(bool, "monitor", "Monitor chardev") orelse false;
+    const want_gdb = b.option(bool, "gdb", "Wait for GDB connections on 1234") orelse false;
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
@@ -10,7 +12,7 @@ pub fn build(b: *std.build.Builder) void {
     const kernel = b.addExecutable("kernel", "src/os.zig");
 
     var disabled_features = std.Target.Cpu.Feature.Set.empty;
-    var enabled_feautres = std.Target.Cpu.Feature.Set.empty;
+    var enabled_features = std.Target.Cpu.Feature.Set.empty;
 
     const features = std.Target.aarch64.Feature;
     disabled_features.addFeature(@enumToInt(features.fp_armv8));
@@ -21,11 +23,12 @@ pub fn build(b: *std.build.Builder) void {
     kernel.disable_stack_probing = true;
     kernel.setTarget(.{
         .cpu_arch = .aarch64,
-        .cpu_model = .{ .explicit = &std.Target.aarch64.cpu.cortex_a72 },
+        // TODO use an a72 for rpi4
+        .cpu_model = .{ .explicit = &std.Target.aarch64.cpu.cortex_a53 },
         .os_tag = std.Target.Os.Tag.freestanding,
         .abi = std.Target.Abi.none,
         .cpu_features_sub = disabled_features,
-        .cpu_features_add = enabled_feautres,
+        .cpu_features_add = enabled_features,
     });
 
     kernel.setLinkerScriptPath("src/bsp/raspberrypi/linker.ld");
@@ -57,22 +60,34 @@ pub fn build(b: *std.build.Builder) void {
 
     const objdump = b.step("objdump", "Dump the kernel ELF");
     objdump.dependOn(&run_objdump.step);
-
-    const run_qemu = b.addSystemCommand(&[_][]const u8{
+    var run_qemu_args = std.ArrayList([]const u8).init(b.allocator);
+    try run_qemu_args.appendSlice(&[_][]const u8{
         "qemu-system-aarch64",
         "-d",
         "in_asm",
         "-kernel",
         kernel_name,
-        //"-m",
-        //"256",
         "-M",
         "raspi3",
         "-serial",
         "stdio",
         "-display",
         if (want_nodisplay) "none" else "cocoa",
+        "-no-reboot",
     });
+    if  (want_monitor) {
+        try run_qemu_args.appendSlice(&[_][]const u8{
+            "-monitor",
+            "tcp::7777",
+        });
+    }
+    if (want_gdb) {
+        try run_qemu_args.appendSlice(&[_][]const u8{
+            "-s",
+            "-S",
+        });
+    }
+    const run_qemu = b.addSystemCommand(run_qemu_args.toOwnedSlice());
     run_qemu.step.dependOn(&run_objcopy.step);
 
     const qemu = b.step("qemu", "Run the program in qemu");

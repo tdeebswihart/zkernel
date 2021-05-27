@@ -10,4 +10,5 @@ comptime {
 
 pub fn init() void {
     cpu.init();
+    memory.zeroBSS();
 }

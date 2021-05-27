@@ -9,7 +9,6 @@ comptime {
 /// Kernel entrypoint
 pub fn main() noreturn {
     platform.init();
-    memory.init();
 
     platform.cpu.hang();
 }
