@@ -28,7 +28,7 @@
         devShell = pkgs.mkShell {
           # supply the specific rust version
           nativeBuildInputs =
-            [ pkgs.xorriso pkgs.llvmPackages_12.bintools pkgs.nasm ];
+            [ pkgs.xorriso pkgs.llvmPackages_12.bintools pkgs.nasm pkgs.gdb ];
         };
       });
 }

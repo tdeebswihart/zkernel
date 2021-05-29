@@ -5,6 +5,7 @@ pub fn build(b: *std.build.Builder) !void {
     const want_nodisplay = b.option(bool, "nodisplay", "No display for qemu") orelse false;
     const want_monitor = b.option(bool, "monitor", "Monitor chardev") orelse false;
     const want_gdb = b.option(bool, "gdb", "Wait for GDB connections on 1234") orelse false;
+    const want_asm = b.option(bool, "disasm", "Dump asm as it is executed") orelse false;
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
@@ -63,22 +64,20 @@ pub fn build(b: *std.build.Builder) !void {
     var run_qemu_args = std.ArrayList([]const u8).init(b.allocator);
     try run_qemu_args.appendSlice(&[_][]const u8{
         "qemu-system-aarch64",
-        "-d",
-        "in_asm",
-        "-kernel",
-        kernel_name,
-        "-M",
-        "raspi3",
-        "-serial",
-        "stdio",
-        "-display",
-        if (want_nodisplay) "none" else "cocoa",
+        "-kernel", kernel_name,
+        "-M", "raspi3",
+        "-serial", "stdio",
+        "-display", if (want_nodisplay) "none" else "cocoa",
         "-no-reboot",
     });
+    if (want_asm) {
+        try run_qemu_args.appendSlice(&[_][]const u8{
+            "-d", "in_asm",
+        });
+    }
     if  (want_monitor) {
         try run_qemu_args.appendSlice(&[_][]const u8{
-            "-monitor",
-            "tcp::7777",
+            "-monitor", "tcp::7777",
         });
     }
     if (want_gdb) {
