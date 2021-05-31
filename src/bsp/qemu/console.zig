@@ -6,8 +6,6 @@ pub fn writeString(str: []const u8) void {
     }
 }
 
-pub fn log(str: []const u8) void {
-    @call(.{ .modifier = .always_inline }, writeString, .{str});
-    serialPort.* = '\r';
-    serialPort.* = '\n';
+pub fn putchar(chr: u8) callconv(.Inline) void {
+    serialPort.* = chr;
 }

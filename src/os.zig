@@ -1,7 +1,9 @@
+pub const bsp = @import("bsp.zig");
 pub const platform = @import("platform.zig");
 pub const memory = @import("memory.zig");
-pub const bsp = @import("bsp.zig");
-pub const console = bsp.console;
+pub const Console = @import("console.zig").Console;
+
+pub const debug = true;
 
 comptime {
     _ = platform.cpu;
@@ -12,7 +14,9 @@ comptime {
 pub fn main() noreturn {
     platform.init();
 
-    console.log("[0] platform init");
+    var console = Console.init();
+
+    console.debug("platform initialized", .{});
 
     platform.cpu.hang();
 }

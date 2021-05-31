@@ -1,6 +1,10 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 
+fn buildTest(b: *std.build.Builder) !void {
+
+}
+
 pub fn build(b: *std.build.Builder) !void {
     const want_nodisplay = b.option(bool, "nodisplay", "No display for qemu") orelse false;
     const want_monitor = b.option(bool, "monitor", "Monitor chardev") orelse false;

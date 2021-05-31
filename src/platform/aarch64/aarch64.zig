@@ -1,9 +1,9 @@
 pub const cpu = @import("cpu.zig");
 pub const memory = @import("memory.zig");
+pub const spinlock = @import("spinlock.zig");
 
 comptime {
     _ = cpu;
-    _ = memory;
 }
 
 pub fn init() void {

@@ -42,3 +42,14 @@ pub fn hang() callconv(.Inline) noreturn {
         as.wfe();
     }
 }
+
+pub fn relax() void {
+    asm volatile ("YIELD");
+}
+
+// pub const InterruptState = bool;
+//
+// pub fn get_and_disable_interrupts() InterruptState {
+//     var daif = asm volatile("MRS %[val], DAIF" : [val] "=r" (->u64));
+//     asm volatile ("MSR DAIFSET")
+// }
