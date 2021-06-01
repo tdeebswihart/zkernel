@@ -1,6 +1,6 @@
 const os = @import("root");
 const bsp = @import("bsp.zig");
-const sync = @import("lib/sync.zig");
+const sync = @import("lib.zig").sync;
 const fmt = @import("std").fmt;
 
 pub const Console = struct {

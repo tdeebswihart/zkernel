@@ -10,6 +10,10 @@ pub fn build(b: *std.build.Builder) !void {
     const want_monitor = b.option(bool, "monitor", "Monitor chardev") orelse false;
     const want_gdb = b.option(bool, "gdb", "Wait for GDB connections on 1234") orelse false;
     const want_asm = b.option(bool, "disasm", "Dump asm as it is executed") orelse false;
+    const board = b.option(enum {
+        rpi3,
+        rpi4,
+        }, "board", "Board to build for") orelse .rpi3;
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
@@ -28,8 +32,12 @@ pub fn build(b: *std.build.Builder) !void {
     kernel.disable_stack_probing = true;
     kernel.setTarget(.{
         .cpu_arch = .aarch64,
-        // TODO use an a72 for rpi4
-        .cpu_model = .{ .explicit = &std.Target.aarch64.cpu.cortex_a53 },
+        .cpu_model = .{
+            .explicit = switch (board){
+                .rpi3 => &std.Target.aarch64.cpu.cortex_a53,
+                .rpi4 => &std.Target.aarch64.cpu.cortex_a72,
+            }
+        },
         .os_tag = std.Target.Os.Tag.freestanding,
         .abi = std.Target.Abi.none,
         .cpu_features_sub = disabled_features,

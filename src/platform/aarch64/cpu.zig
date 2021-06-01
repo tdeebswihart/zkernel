@@ -1,5 +1,5 @@
 const root = @import("root");
-const as = @import("assembly.zig");
+const arm = @import("assembly.zig");
 const bsp = @import("root").bsp;
 
 comptime {
@@ -39,7 +39,7 @@ pub fn init() void {}
 // Hang forever
 pub fn hang() callconv(.Inline) noreturn {
     while (true) {
-        as.wfe();
+        arm.wfe();
     }
 }
 
@@ -53,3 +53,10 @@ pub fn relax() void {
 //     var daif = asm volatile("MRS %[val], DAIF" : [val] "=r" (->u64));
 //     asm volatile ("MSR DAIFSET")
 // }
+
+pub fn delay(cycles: usize) void {
+    var n: usize = 0;
+    while (n < cycles) : (n += 1) {
+        arm.nop();
+    }
+}
