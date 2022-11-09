@@ -1,5 +1,5 @@
-const arch = @import("builtin").cpu.arch;
-usingnamespace @import(switch (arch) {
-    .aarch64 => "platform/aarch64/aarch64.zig",
+pub const cpu = @import("builtin").cpu;
+usingnamespace switch (cpu.arch) {
+    .aarch64 => @import("platform/aarch64/aarch64.zig"),
     else => @compileError("unsupported architecture"),
-});
+};

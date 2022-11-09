@@ -4,7 +4,7 @@ const sync = @import("lib.zig").sync;
 const fmt = @import("std").fmt;
 
 pub const Console = struct {
-    guard: sync.Mutex = .{},
+    guard: sync.Mutex,
     // Implements the pseudo-interface required by `std.fmt.format`
     pub const Error = anyerror;
 
@@ -28,7 +28,7 @@ pub const Console = struct {
         defer self.guard.unlock();
 
         var i: usize = 0;
-        while (i < times): (i+=1) {
+        while (i < times) : (i += 1) {
             bsp.console.putchar(val);
         }
     }
@@ -46,6 +46,6 @@ pub const Console = struct {
             fmt.format(self, "[DEBUG] " ++ format ++ "\r\n", args) catch unreachable;
         }
     } else struct {
-        pub fn debug(self: *Self, comptime format: []const u8, args: anytype) void {}
+        pub fn debug(_: *Self, comptime _: []const u8, _: anytype) void {}
     };
 };

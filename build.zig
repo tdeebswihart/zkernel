@@ -1,10 +1,6 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 
-fn buildTest(b: *std.build.Builder) !void {
-
-}
-
 pub fn build(b: *std.build.Builder) !void {
     const want_nodisplay = b.option(bool, "nodisplay", "No display for qemu") orelse false;
     const want_monitor = b.option(bool, "monitor", "Monitor chardev") orelse false;
@@ -13,7 +9,7 @@ pub fn build(b: *std.build.Builder) !void {
     const board = b.option(enum {
         rpi3,
         rpi4,
-        }, "board", "Board to build for") orelse .rpi3;
+    }, "board", "Board to build for") orelse .rpi3;
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
@@ -32,28 +28,27 @@ pub fn build(b: *std.build.Builder) !void {
     kernel.disable_stack_probing = true;
     kernel.setTarget(.{
         .cpu_arch = .aarch64,
-        .cpu_model = .{
-            .explicit = switch (board){
-                .rpi3 => &std.Target.aarch64.cpu.cortex_a53,
-                .rpi4 => &std.Target.aarch64.cpu.cortex_a72,
-            }
-        },
+        .cpu_model = .{ .explicit = switch (board) {
+            .rpi3 => &std.Target.aarch64.cpu.cortex_a53,
+            .rpi4 => &std.Target.aarch64.cpu.cortex_a72,
+        } },
         .os_tag = std.Target.Os.Tag.freestanding,
         .abi = std.Target.Abi.none,
         .cpu_features_sub = disabled_features,
         .cpu_features_add = enabled_features,
     });
 
-    kernel.setLinkerScriptPath("src/bsp/raspberrypi/linker.ld");
+    kernel.setLinkerScriptPath(.{ .path = "src/bsp/raspberrypi/linker.ld" });
     kernel.setBuildMode(mode);
     kernel.setOutputDir("zig-cache");
     kernel.install();
 
     b.default_step.dependOn(&kernel.step);
     const kernel_name = "kernel8.img";
+    const kernel_obj = b.fmt("{s}/{s}", .{ b.cache_root, kernel.out_filename });
 
     const run_objcopy = b.addSystemCommand(&[_][]const u8{
-        "llvm-objcopy",   kernel.getOutputPath(),
+        "llvm-objcopy",   kernel_obj,
         "--only-section", ".text",
         "-O",             "binary",
         kernel_name,
@@ -63,7 +58,7 @@ pub fn build(b: *std.build.Builder) !void {
     b.default_step.dependOn(&run_objcopy.step);
 
     const run_objdump = b.addSystemCommand(&[_][]const u8{
-        "llvm-objdump",  kernel.getOutputPath(),
+        "llvm-objdump",  kernel_obj,
         "--disassemble", "--demangle",
         "--section",     ".text",
         "--section",     ".rodata",
@@ -76,10 +71,14 @@ pub fn build(b: *std.build.Builder) !void {
     var run_qemu_args = std.ArrayList([]const u8).init(b.allocator);
     try run_qemu_args.appendSlice(&[_][]const u8{
         "qemu-system-aarch64",
-        "-kernel", kernel_name,
-        "-M", "raspi3",
-        "-serial", "stdio",
-        "-display", if (want_nodisplay) "none" else "cocoa",
+        "-kernel",
+        kernel_name,
+        "-M",
+        "raspi3b",
+        "-serial",
+        "stdio",
+        "-display",
+        if (want_nodisplay) "none" else "cocoa",
         "-no-reboot",
     });
     if (want_asm) {
@@ -87,7 +86,7 @@ pub fn build(b: *std.build.Builder) !void {
             "-d", "in_asm",
         });
     }
-    if  (want_monitor) {
+    if (want_monitor) {
         try run_qemu_args.appendSlice(&[_][]const u8{
             "-monitor", "tcp::7777",
         });

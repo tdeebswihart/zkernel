@@ -1,8 +1,8 @@
 const opts = @import("build_options");
-const board = @import(switch (opts.board) {
-    .rpi3 => "bcm2837",
-    .rpi4 => "bcm2711",
-    } ++ "/board.zig");
+const board = switch (opts.board) {
+    .rpi3 => @import("bcm2837/board.zig"),
+    .rpi4 => @import("bcm2711/board.zig"),
+};
 
 const PL011 = struct {
     pub fn init() PL011 {

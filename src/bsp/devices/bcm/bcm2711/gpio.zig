@@ -3,8 +3,9 @@ pub const resistorSelect = @import("../gpio.zig").resistorSelect;
 
 const GPIO = RegisterBank.at(0x7e20_0000);
 
+const fsel = u3;
 // we only need gpio pins 14 and 15
-const GPFSEL1 = GPIO.reg(0x04, u32, packed struct {
+const GPFSEL1 = GPIO.reg(0x04, u32, extern struct {
     fsel10: fsel,
     fsel11: fsel,
     fsel12: fsel,
@@ -31,12 +32,6 @@ const GPFSEL1 = GPIO.reg(0x04, u32, packed struct {
     fsel19: fsel,
     reserved: u2,
 });
-
-pub const resistorSelect = packed enum(2) {
-    none = 0b0,
-    pullup = 0b01,
-    pulldown = 0b10,
-};
 
 const GPIO_PUP_PDN_CNTRL_REG0 = GPIO.reg(0xe4, u32, packed struct {
     ignored: u28,
