@@ -1,5 +1,7 @@
 pub extern var __bss_start: u64;
 pub extern var __bss_end: u64;
+pub extern var __code_start: u64;
+pub extern var __code_end_exclusive: u64;
 
 // Zero a range
 pub fn zeroBSS() void {

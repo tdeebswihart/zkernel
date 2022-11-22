@@ -2,18 +2,13 @@ const root = @import("root");
 const arm = @import("assembly.zig");
 const bsp = @import("root").bsp;
 
-comptime {
-    @export(_start, .{ .name = "_start", .section = ".text._start" });
-}
-
-pub fn _start() callconv(.Naked) noreturn {
+pub fn entryPoint() callconv(.Naked) noreturn {
     const core = asm volatile (
         \\ mrs x1, MPIDR_EL1
         \\ and x1, x1, 0b11
-            : [ret] "={x1}" (-> u64)
-            :
-            : "x1"
-
+        : [ret] "={x1}" (-> u64),
+        :
+        : "x1"
     );
 
     if (core != bsp.cpu.BOOT_CORE) {
@@ -37,7 +32,7 @@ pub fn _start() callconv(.Naked) noreturn {
 pub fn init() void {}
 
 // Hang forever
-pub fn hang() callconv(.Inline) noreturn {
+pub inline fn hang() noreturn {
     while (true) {
         arm.wfe();
     }

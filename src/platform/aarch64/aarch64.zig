@@ -6,3 +6,7 @@ pub fn init() void {
     cpu.init();
     memory.zeroBSS();
 }
+
+comptime {
+    @import("std").testing.refAllDecls(@This());
+}

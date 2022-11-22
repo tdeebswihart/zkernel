@@ -65,9 +65,26 @@ pub fn build(b: *std.build.Builder) !void {
         "--section",     ".got",
     });
     run_objdump.step.dependOn(&kernel.step);
+    b.step("objdump", "Dump the kernel ELF").dependOn(&run_objdump.step);
 
-    const objdump = b.step("objdump", "Dump the kernel ELF");
-    objdump.dependOn(&run_objdump.step);
+    const run_hopper = b.addSystemCommand(&[_][]const u8{
+        "hopperv4", "-e", kernel_obj,
+    });
+    run_hopper.step.dependOn(&kernel.step);
+    b.step("disas", "Disassemble kernel").dependOn(&run_hopper.step);
+
+    const readelf = b.addSystemCommand(&[_][]const u8{
+        "aarch64-elf-readelf", "--headers", kernel_obj,
+    });
+    readelf.step.dependOn(&kernel.step);
+    b.step("readelf", "Dump elf headers").dependOn(&readelf.step);
+
+    const nm = b.addSystemCommand(&[_][]const u8{
+        "aarch64-elf-nm", kernel_obj,
+    });
+    nm.step.dependOn(&kernel.step);
+    b.step("nm", "Dump symbol table").dependOn(&nm.step);
+
     var run_qemu_args = std.ArrayList([]const u8).init(b.allocator);
     try run_qemu_args.appendSlice(&[_][]const u8{
         "qemu-system-aarch64",

@@ -30,6 +30,7 @@ SECTIONS
     {
         KEEP(*(.text._start))
         KEEP(*(.text._start_args))
+        KEEP(*(.text.main))
         *(.text*)                 /* Everything else */
     } :segment_rx
 
