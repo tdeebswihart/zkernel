@@ -11,7 +11,7 @@ comptime {
     @import("std").testing.refAllDecls(@This());
 }
 
-pub const console = Uart.new(memory.PL011_UART_START);
+pub const console: Uart = Uart.new(memory.mmio.PL011_UART_START);
 
 pub fn init() void {
     comptime {
