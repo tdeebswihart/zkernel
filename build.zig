@@ -12,21 +12,15 @@ pub fn build(b: *std.build.Builder) !void {
     const want_gdb = b.option(bool, "gdb", "Wait for GDB connections on 1234") orelse false;
     const want_asm = b.option(bool, "disasm", "Dump asm as it is executed") orelse false;
     const board = b.option(boardChoice, "board", "Board to build for") orelse .rpi3;
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
-
-    const kernel = b.addExecutable("kernel", "src/os.zig");
-    // Disabled until https://github.com/ziglang/zig/issues/10364 and/or https://github.com/ziglang/zig/issues/9844 are fixed
-    kernel.want_lto = false;
 
     var disabled_features = std.Target.Cpu.Feature.Set.empty;
     var enabled_features = std.Target.Cpu.Feature.Set.empty;
-
     const features = std.Target.aarch64.Feature;
     disabled_features.addFeature(@enumToInt(features.fp_armv8));
     disabled_features.addFeature(@enumToInt(features.crypto));
     disabled_features.addFeature(@enumToInt(features.neon));
+
+    const kernel = b.addExecutable("kernel", "src/os.zig");
     kernel.code_model = .small;
 
     kernel.disable_stack_probing = true;
@@ -47,18 +41,19 @@ pub fn build(b: *std.build.Builder) !void {
 
     kernel.setLinkerScriptPath(.{ .path = "src/bsp/raspberrypi/linker.ld" });
     kernel.addAssemblyFile("src/platform/aarch64/boot.s");
-    kernel.setBuildMode(mode);
+    kernel.setBuildMode(b.standardReleaseOptions());
     kernel.setOutputDir("zig-cache");
+    // Disabled until https://github.com/ziglang/zig/issues/10364 and/or https://github.com/ziglang/zig/issues/9844 are fixed
+    kernel.want_lto = false;
     kernel.install();
 
     b.default_step.dependOn(&kernel.step);
-    const kernel_name = "kernel8.img";
     const kernel_obj = b.fmt("{s}/{s}", .{ b.cache_root, kernel.out_filename });
+    const kernel_name = "kernel8.img";
 
     const run_objcopy = b.addSystemCommand(&[_][]const u8{
-        "llvm-objcopy",   kernel_obj,
-        "--only-section", ".text",
-        "-O",             "binary",
+        "aarch64-elf-objcopy", kernel_obj,
+        "-O",                  "binary",
         kernel_name,
     });
     run_objcopy.step.dependOn(&kernel.step);
