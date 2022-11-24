@@ -68,7 +68,7 @@ pub const GPIO_PUP_PDN_CTNRL_REG0 = GPIO.reg(0xE4, u32, packed struct(u32) {
     _rest: u26 = 0,
 });
 
-pub fn setupUart1() void {
+pub fn setupUart() void {
     GPPUD.write(.{
         .pud = .off,
     });

@@ -9,6 +9,7 @@ pub const debug = true;
 comptime {
     @export(platform.cpu.kinit, .{ .name = "kinit", .linkage = .Strong });
     @export(main, .{ .name = "kmain", .linkage = .Strong });
+    _ = bsp.console;
 }
 
 /// Kernel entrypoint

@@ -4,10 +4,6 @@ const bsp = @import("bsp.zig");
 const sync = @import("lib.zig").sync;
 const fmt = @import("std").fmt;
 
-comptime {
-    std.testing.refAllDecls(@This());
-}
-
 //guard: sync.Mutex,
 // Implements the pseudo-interface required by `std.fmt.format`
 pub const WriteError = anyerror;

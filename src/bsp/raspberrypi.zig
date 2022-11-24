@@ -7,10 +7,6 @@ const board = switch (@import("build_options").board) {
 
 const Uart = @import("devices/pl011/uart.zig");
 
-comptime {
-    @import("std").testing.refAllDecls(@This());
-}
-
 pub const console: Uart = Uart.new(memory.mmio.PL011_UART_START);
 
 pub fn init() void {
@@ -24,6 +20,6 @@ pub fn init() void {
         .fsel15 = .rxd0,
     });
 
-    board.gpio.setupUart1();
+    board.gpio.setupUart();
     console.init();
 }

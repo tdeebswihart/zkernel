@@ -16,7 +16,3 @@ pub const mmio = MMIO(switch (@import("build_options").board) {
     .rpi3 => 0x3F00_0000,
     .rpi4 => 0xFE00_0000,
 });
-
-comptime {
-    @import("std").testing.refAllDecls(@This());
-}

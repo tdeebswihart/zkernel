@@ -5,7 +5,3 @@ pub const SpinLock = @import("spinlock.zig");
 pub fn init() void {
     cpu.init();
 }
-
-comptime {
-    @import("std").testing.refAllDecls(@This());
-}
