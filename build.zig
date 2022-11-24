@@ -20,11 +20,11 @@ pub fn build(b: *std.build.Builder) !void {
     disabled_features.addFeature(@enumToInt(features.crypto));
     disabled_features.addFeature(@enumToInt(features.neon));
 
-    const kernel = b.addExecutable("kernel", "src/os.zig");
-    kernel.code_model = .small;
+    const kernel_elf = b.addExecutable("kernel", "src/os.zig");
+    kernel_elf.code_model = .small;
 
-    kernel.disable_stack_probing = true;
-    kernel.setTarget(.{
+    kernel_elf.disable_stack_probing = true;
+    kernel_elf.setTarget(.{
         .cpu_arch = .aarch64,
         .cpu_model = .{ .explicit = switch (board) {
             .rpi3 => &std.Target.aarch64.cpu.cortex_a53,
@@ -37,62 +37,56 @@ pub fn build(b: *std.build.Builder) !void {
     });
     var options = b.addOptions();
     options.addOption(boardChoice, "board", board);
-    kernel.addOptions("build_options", options);
+    kernel_elf.addOptions("build_options", options);
 
-    kernel.setLinkerScriptPath(.{ .path = "src/bsp/raspberrypi/linker.ld" });
-    kernel.addAssemblyFile("src/platform/aarch64/boot.s");
-    kernel.setBuildMode(b.standardReleaseOptions());
-    kernel.setOutputDir("zig-cache");
+    kernel_elf.setLinkerScriptPath(.{ .path = "src/bsp/raspberrypi/linker.ld" });
+    kernel_elf.addAssemblyFile("src/platform/aarch64/boot.s");
+    kernel_elf.setBuildMode(b.standardReleaseOptions());
+    kernel_elf.setOutputDir("zig-cache");
     // Disabled until https://github.com/ziglang/zig/issues/10364 and/or https://github.com/ziglang/zig/issues/9844 are fixed
-    kernel.want_lto = false;
-    kernel.install();
+    kernel_elf.want_lto = false;
+    kernel_elf.install();
 
-    b.default_step.dependOn(&kernel.step);
-    const kernel_obj = b.fmt("{s}/{s}", .{ b.cache_root, kernel.out_filename });
-    const kernel_name = "kernel8.img";
+    b.default_step.dependOn(&kernel_elf.step);
+    const kernel_obj = kernel_elf.installRaw("kernel.img8", .{ .format = .bin });
+    b.default_step.dependOn(&kernel_obj.step);
 
-    const run_objcopy = b.addSystemCommand(&[_][]const u8{
-        "aarch64-elf-objcopy", kernel_obj,
-        "-O",                  "binary",
-        kernel_name,
-    });
-    run_objcopy.step.dependOn(&kernel.step);
-
-    b.default_step.dependOn(&run_objcopy.step);
+    const kernel_elf_path = b.fmt("{s}/{s}", .{ b.cache_root, kernel_elf.out_filename });
+    const kernel_obj_path = b.getInstallPath(kernel_obj.dest_dir, kernel_obj.dest_filename);
 
     const run_objdump = b.addSystemCommand(&[_][]const u8{
-        "llvm-objdump",  kernel_obj,
+        "llvm-objdump",  kernel_elf_path,
         "--disassemble", "--demangle",
         "--section",     ".text",
         "--section",     ".rodata",
         "--section",     ".got",
     });
-    run_objdump.step.dependOn(&kernel.step);
+    run_objdump.step.dependOn(&kernel_elf.step);
     b.step("objdump", "Dump the kernel ELF").dependOn(&run_objdump.step);
 
     const run_hopper = b.addSystemCommand(&[_][]const u8{
-        "hopperv4", "-a", "-l", "ELF", "--aarch64", "-e", kernel_obj,
+        "hopperv4", "-a", "-l", "ELF", "--aarch64", "-e", kernel_elf_path,
     });
-    run_hopper.step.dependOn(&kernel.step);
+    run_hopper.step.dependOn(&kernel_elf.step);
     b.step("disasm", "Disassemble kernel").dependOn(&run_hopper.step);
 
     const readelf = b.addSystemCommand(&[_][]const u8{
-        "aarch64-elf-readelf", "--headers", kernel_obj,
+        "aarch64-elf-readelf", "--headers", kernel_elf_path,
     });
-    readelf.step.dependOn(&kernel.step);
+    readelf.step.dependOn(&kernel_elf.step);
     b.step("readelf", "Dump elf headers").dependOn(&readelf.step);
 
     const nm = b.addSystemCommand(&[_][]const u8{
-        "aarch64-elf-nm", kernel_obj,
+        "aarch64-elf-nm", kernel_elf_path,
     });
-    nm.step.dependOn(&kernel.step);
+    nm.step.dependOn(&kernel_elf.step);
     b.step("nm", "Dump symbol table").dependOn(&nm.step);
 
     var run_qemu_args = std.ArrayList([]const u8).init(b.allocator);
     try run_qemu_args.appendSlice(&[_][]const u8{
         "qemu-system-aarch64",
         "-kernel",
-        kernel_name,
+        kernel_obj_path,
         "-M",
         "raspi3b",
         "-serial",
@@ -118,7 +112,7 @@ pub fn build(b: *std.build.Builder) !void {
         });
     }
     const run_qemu = b.addSystemCommand(run_qemu_args.toOwnedSlice());
-    run_qemu.step.dependOn(&run_objcopy.step);
+    run_qemu.step.dependOn(&kernel_obj.step);
 
     const qemu = b.step("qemu", "Run the program in qemu");
     qemu.dependOn(&run_qemu.step);
