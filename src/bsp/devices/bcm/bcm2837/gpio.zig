@@ -4,59 +4,68 @@ pub const cpu = @import("root").platform.cpu;
 const GPIO = RegisterBank.at(0x3F20_0000);
 
 const fsel = u3;
-const fsel14 = packed enum(u3) {
-    txd0 = 0b000,
-    sd6 = 0b001,
-    dpi_d10 = 0b010,
-    spi5_mosi = 0b011,
-    cts5 = 0b100,
-    txd1 = 0b101,
-};
 
-const fsel15 = packed enum(u3) {
-    rxd0 = 0b000,
-    sd7 = 0b001,
-    dpi_d11 = 0b010,
-    spi5_sclk = 0b011,
-    rts5 = 0b100,
-    rxd1 = 0b101,
-};
-
-const GPFSEL1 = GPIO.reg(0x04, u32, extern struct {
-    fsel10: fsel align(1),
-    fsel11: fsel align(1),
-    fsel12: fsel align(1),
-    fsel13: fsel align(1),
-    fsel14: fsel14 align(1),
-    fsel15: fsel15 align(1),
-    fsel16: fsel align(1),
-    fsel17: fsel align(1),
-    fsel18: fsel align(1),
-    fsel19: fsel align(1),
-    reserved: u2 align(1),
+pub const GPFSEL1 = GPIO.reg(0x04, u32, packed struct(u32) {
+    fsel10: fsel = 0,
+    fsel11: fsel = 0,
+    fsel12: fsel = 0,
+    fsel13: fsel = 0,
+    fsel14: enum(u3) {
+        txd0 = 0b000,
+        sd6 = 0b001,
+        dpi_d10 = 0b010,
+        spi5_mosi = 0b011,
+        cts5 = 0b100,
+        txd1 = 0b101,
+    },
+    fsel15: enum(u3) {
+        rxd0 = 0b000,
+        sd7 = 0b001,
+        dpi_d11 = 0b010,
+        spi5_sclk = 0b011,
+        rts5 = 0b100,
+        rxd1 = 0b101,
+    },
+    fsel16: fsel = 0,
+    fsel17: fsel = 0,
+    fsel18: fsel = 0,
+    fsel19: fsel = 0,
+    reserved: u2 = 0,
 });
 
-pub const resistorSelect = packed enum(2) {
-    off = 0b00,
-    pulldown = 0b01,
-    pullup = 0b10,
-};
-
-pub const GPPUD = GPIO.reg(0x94, u32, packed struct {
-    pud: resistorSelect,
-    ignored: u30,
+pub const GPPUD = GPIO.reg(0x94, u32, packed struct(u32) {
+    pud: enum(u2) {
+        off = 0b00,
+        pullDown = 0b01,
+        pullUp = 0b10,
+    } = .off,
+    ignored: u30 = 0,
 });
 
-pub const clockedPin = packed enum(u1) {
+pub const clockedPin = enum(u1) {
     off = 0,
     assertClock = 1,
 };
 
-pub const GPPUDCLK0 = GPIO.reg(0x98, u32, packed struct {
-    ignored: u14,
-    gpio14: clockedPin,
-    gpio15: clockedPin,
-    alsoIgnored: u16,
+pub const GPPUDCLK0 = GPIO.reg(0x98, u32, packed struct(u32) {
+    ignored: u14 = 0,
+    gpio14: clockedPin = .off,
+    gpio15: clockedPin = .off,
+    alsoIgnored: u16 = 0,
+});
+
+pub const GPIO_PUP_PDN_CTNRL_REG0 = GPIO.reg(0xE4, u32, packed struct(u32) {
+    _res: u1 = 0,
+    CNTRL15: enum(u2) {
+        noResistor = 0b00,
+        pullUp = 0b01,
+    } = .noResistor,
+    _res29: u1 = 0,
+    CNTRL14: enum(u2) {
+        noResistor = 0b00,
+        pullUp = 0b01,
+    } = .noResistor,
+    _rest: u26 = 0,
 });
 
 pub fn setupUart1() void {
@@ -76,7 +85,7 @@ pub fn setupUart1() void {
     // - The Linux 2837 GPIO driver waits 1 µs between the steps.
     //
     // So lets try to be on the safe side and default to 2000 cycles, which would equal 1 µs
-    // would the CPU be clocked at 2 GHz.    cpu.delay(2000);
+    // would the CPU be clocked at 2 GHz.
     cpu.delay(2000);
 
     GPPUDCLK0.write(.{
@@ -90,5 +99,5 @@ pub fn setupUart1() void {
         .pud = .off,
     });
 
-    GPPUDCLK0.write(0);
+    GPPUDCLK0.write(.{});
 }

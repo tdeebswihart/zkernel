@@ -4,7 +4,6 @@ pub const Mutex = struct {
     serving: usize = 0,
     ticket: usize = 0,
 
-
     const Self = @This();
 
     pub fn lock(self: *Self) void {
@@ -23,5 +22,4 @@ pub const Mutex = struct {
         // FIXME: require the interrupt state to set and set it
         _ = @atomicRmw(usize, &self.serving, .Add, 1, .AcqRel);
     }
-
 };

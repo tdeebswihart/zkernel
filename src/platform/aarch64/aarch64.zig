@@ -4,7 +4,6 @@ pub const SpinLock = @import("spinlock.zig");
 
 pub fn init() void {
     cpu.init();
-    memory.zeroBSS();
 }
 
 comptime {

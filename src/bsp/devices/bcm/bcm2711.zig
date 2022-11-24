@@ -1,6 +1,7 @@
 const register = @import("root").lib.register;
+pub const RegisterBank = @import("root").lib.mmio.RegisterBank;
 pub const MMIO_BASE = 0x3F000000;
-const MMIO_BANK = RegisterBank.at(0x3F000000);
+const MMIO_BANK = RegisterBank(0x3F000000);
 
 const AUX_BANK = MMIO_BANK.sub(0x215000);
 pub const AUX_ENABLES = AUX_BANK.reg(0x04);

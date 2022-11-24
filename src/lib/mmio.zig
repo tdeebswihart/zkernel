@@ -4,15 +4,15 @@ pub fn Register(comptime Read: type, comptime Write: type) type {
 
         const Self = @This();
 
-        pub fn at(address: usize) callconv(.Inline) Register {
-            return Register{ .raw_ptr = @intToPtr(*volatile Read, address) };
+        pub inline fn at(address: usize) @This() {
+            return @This(){ .raw_ptr = @intToPtr(*volatile Read, address) };
         }
 
-        pub fn read(self: Register) callconv(.Inline) Read {
+        pub inline fn read(self: @This()) Read {
             return self.raw_ptr.*;
         }
 
-        pub fn write(self: Register, value: Write) callconv(.Inline) void {
+        pub inline fn write(self: @This(), value: Write) void {
             self.raw_ptr.* = @bitCast(Read, value);
         }
     };
@@ -32,7 +32,7 @@ pub const RegisterBank = struct {
     }
 
     /// Define a single register
-    pub fn reg(self: @This(), comptime offset: comptime_int, comptime Read: type, comptime Write: type) type {
+    pub fn reg(comptime self: @This(), comptime offset: comptime_int, comptime Read: type, comptime Write: type) Register(Read, Write) {
         return Register(Read, Write).at(self.base + offset);
     }
 };

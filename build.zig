@@ -1,20 +1,24 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 
+const boardChoice = enum {
+    rpi3,
+    rpi4,
+};
+
 pub fn build(b: *std.build.Builder) !void {
     const want_nodisplay = b.option(bool, "nodisplay", "No display for qemu") orelse false;
     const want_monitor = b.option(bool, "monitor", "Monitor chardev") orelse false;
     const want_gdb = b.option(bool, "gdb", "Wait for GDB connections on 1234") orelse false;
     const want_asm = b.option(bool, "disasm", "Dump asm as it is executed") orelse false;
-    const board = b.option(enum {
-        rpi3,
-        rpi4,
-    }, "board", "Board to build for") orelse .rpi3;
+    const board = b.option(boardChoice, "board", "Board to build for") orelse .rpi3;
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
     const kernel = b.addExecutable("kernel", "src/os.zig");
+    // Disabled until https://github.com/ziglang/zig/issues/10364 and/or https://github.com/ziglang/zig/issues/9844 are fixed
+    kernel.want_lto = false;
 
     var disabled_features = std.Target.Cpu.Feature.Set.empty;
     var enabled_features = std.Target.Cpu.Feature.Set.empty;
@@ -37,8 +41,12 @@ pub fn build(b: *std.build.Builder) !void {
         .cpu_features_sub = disabled_features,
         .cpu_features_add = enabled_features,
     });
+    var options = b.addOptions();
+    options.addOption(boardChoice, "board", board);
+    kernel.addOptions("build_options", options);
 
     kernel.setLinkerScriptPath(.{ .path = "src/bsp/raspberrypi/linker.ld" });
+    kernel.addAssemblyFile("src/platform/aarch64/boot.s");
     kernel.setBuildMode(mode);
     kernel.setOutputDir("zig-cache");
     kernel.install();
@@ -68,10 +76,10 @@ pub fn build(b: *std.build.Builder) !void {
     b.step("objdump", "Dump the kernel ELF").dependOn(&run_objdump.step);
 
     const run_hopper = b.addSystemCommand(&[_][]const u8{
-        "hopperv4", "-e", kernel_obj,
+        "hopperv4", "-a", "-l", "ELF", "--aarch64", "-e", kernel_obj,
     });
     run_hopper.step.dependOn(&kernel.step);
-    b.step("disas", "Disassemble kernel").dependOn(&run_hopper.step);
+    b.step("disasm", "Disassemble kernel").dependOn(&run_hopper.step);
 
     const readelf = b.addSystemCommand(&[_][]const u8{
         "aarch64-elf-readelf", "--headers", kernel_obj,

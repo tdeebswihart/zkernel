@@ -1,55 +1,81 @@
 /* SPDX-License-Identifier: MIT OR Apache-2.0
  *
- * Copyright (c) 2018-2021 Andre Richter <andre.o.richter@gmail.com>
+ * Copyright (c) 2018-2022 Andre Richter <andre.o.richter@gmail.com>
  */
+ PAGE_SIZE = 64K;
+ PAGE_MASK = PAGE_SIZE - 1;
 
-/* The address at which the the kernel binary will be loaded by the Raspberry's firmware */
-__rpi_load_addr = 0x80000;
+__rpi_phys_dram_start_addr = 0;
 
-ENTRY(__rpi_load_addr)
+/* The physical address at which the the kernel binary will be loaded by the Raspberry's firmware */
+__rpi_phys_binary_load_addr = 0x80000;
 
+
+ENTRY(__rpi_phys_binary_load_addr)
+
+/* Flags:
+ *     4 == R
+ *     5 == RX
+ *     6 == RW
+ *
+ * Segments are marked PT_LOAD below so that the ELF file provides virtual and physical addresses.
+ * It doesn't mean all of them need actually be loaded.
+ */
 PHDRS
 {
-    segment_rx PT_LOAD FLAGS(5); /* 5 == RX */
-    segment_rw PT_LOAD FLAGS(6); /* 6 == RW */
+    segment_boot_core_stack PT_LOAD FLAGS(6);
+    segment_code            PT_LOAD FLAGS(5);
+    segment_data            PT_LOAD FLAGS(6);
 }
 
 SECTIONS
 {
-    . =  __rpi_load_addr;
-                                        /*   ^             */
-                                        /*   | stack       */
-                                        /*   | growth      */
-                                        /*   | direction   */
-   __boot_core_stack_end_exclusive = .; /*   |             */
+    . =  __rpi_phys_dram_start_addr;
+
+    /***********************************************************************************************
+    * Boot Core Stack
+    ***********************************************************************************************/
+    .boot_core_stack (NOLOAD) :
+    {
+                                             /*   ^             */
+                                             /*   | stack       */
+        . += __rpi_phys_binary_load_addr;    /*   | growth      */
+                                             /*   | direction   */
+        __boot_core_stack_end_exclusive = .; /*   |             */
+    } :segment_boot_core_stack
+
+    ASSERT((. & PAGE_MASK) == 0, "End of boot core stack is not page aligned")
 
     /***********************************************************************************************
     * Code + RO Data + Global Offset Table
     ***********************************************************************************************/
+    __code_start = .;
     .text :
     {
         KEEP(*(.text._start))
-        KEEP(*(.text._start_args))
-        KEEP(*(.text.main))
+        KEEP(*(.text._start_args)) /* Constants read by _start(). */
+        KEEP(*(.text.kinit))            /* The zig entry point */
+        KEEP(*(.text.kmain))            /* The zig entry point */
         *(.text*)                 /* Everything else */
-    } :segment_rx
+    } :segment_code
 
-    .rodata : ALIGN(8) { *(.rodata*) } :segment_rx
-    .got    : ALIGN(8) { *(.got)     } :segment_rx
+    .rodata : ALIGN(8) { *(.rodata*) } :segment_code
+    .got    : ALIGN(8) { *(.got)     } :segment_code
+
+    . = ALIGN(PAGE_SIZE);
+    __code_end_exclusive = .;
 
     /***********************************************************************************************
     * Data + BSS
     ***********************************************************************************************/
-    .data : { *(.data*) } :segment_rw
+    .data : { *(.data*) } :segment_data
 
-    /* Section is zeroed in u64 chunks, align start and end to 8 bytes */
-    .bss : ALIGN(8)
+    /* Section is zeroed in pairs of u64. Align start and end to 16 bytes */
+    .bss (NOLOAD) : ALIGN(16)
     {
         __bss_start = .;
         *(.bss*);
-        . = ALIGN(8);
-
-        . += 8; /* Fill for the bss == 0 case, so that __bss_start <= __bss_end_inclusive holds */
-        __bss_end = . - 8;
-    } :NONE
+        . = ALIGN(16);
+        __bss_end_exclusive = .;
+    } :segment_data
 }

@@ -8,21 +8,20 @@ comptime {
     std.testing.refAllDecls(@This());
 }
 
-guard: sync.Mutex,
+//guard: sync.Mutex,
 // Implements the pseudo-interface required by `std.fmt.format`
 pub const WriteError = anyerror;
 
 const Self = @This();
 
 pub fn init() Self {
-    return Self{
-        .guard = .{},
-    };
+    return .{}; //.guard = .{} };
 }
 
 pub fn writeByteNTimes(self: *Self, val: u8, times: usize) !void {
-    self.guard.lock();
-    defer self.guard.unlock();
+    _ = self;
+    //self.guard.lock();
+    //defer self.guard.unlock();
 
     var i: usize = 0;
     while (i < times) : (i += 1) {
@@ -31,8 +30,9 @@ pub fn writeByteNTimes(self: *Self, val: u8, times: usize) !void {
 }
 
 pub fn write(self: *Self, bytes: []const u8) WriteError!usize {
-    self.guard.lock();
-    defer self.guard.unlock();
+    _ = self;
+    //self.guard.lock();
+    //defer self.guard.unlock();
 
     bsp.console.write(bytes);
     return bytes.len;

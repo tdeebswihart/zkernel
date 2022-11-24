@@ -1,1 +1,1 @@
-pub const BOOT_CORE: u8 linksection(".text._start_args") = 0;
+pub export const BOOT_CORE_ID: u8 linksection(".text._start_args") = 0;

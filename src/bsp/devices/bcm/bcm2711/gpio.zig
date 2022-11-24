@@ -5,12 +5,12 @@ const GPIO = RegisterBank.at(0x7e20_0000);
 
 const fsel = u3;
 // we only need gpio pins 14 and 15
-const GPFSEL1 = GPIO.reg(0x04, u32, extern struct {
-    fsel10: fsel,
-    fsel11: fsel,
-    fsel12: fsel,
-    fsel13: fsel,
-    fsel14: packed enum(u3) {
+pub const GPFSEL1 = GPIO.reg(0x04, u32, packed struct(u32) {
+    fsel10: fsel = 0,
+    fsel11: fsel = 0,
+    fsel12: fsel = 0,
+    fsel13: fsel = 0,
+    fsel14: enum(u3) {
         txd0 = 0b000,
         sd6 = 0b001,
         dpi_d10 = 0b010,
@@ -18,7 +18,7 @@ const GPFSEL1 = GPIO.reg(0x04, u32, extern struct {
         cts5 = 0b100,
         txd1 = 0b101,
     },
-    fsel15: packed enum(u3) {
+    fsel15: enum(u3) {
         rxd0 = 0b000,
         sd7 = 0b001,
         dpi_d11 = 0b010,
@@ -26,14 +26,14 @@ const GPFSEL1 = GPIO.reg(0x04, u32, extern struct {
         rts5 = 0b100,
         rxd1 = 0b101,
     },
-    fsel16: fsel,
-    fsel17: fsel,
-    fsel18: fsel,
-    fsel19: fsel,
-    reserved: u2,
+    fsel16: fsel = 0,
+    fsel17: fsel = 0,
+    fsel18: fsel = 0,
+    fsel19: fsel = 0,
+    reserved: u2 = 0,
 });
 
-const GPIO_PUP_PDN_CNTRL_REG0 = GPIO.reg(0xe4, u32, packed struct {
+pub const GPIO_PUP_PDN_CNTRL_REG0 = GPIO.reg(0xe4, u32, packed struct {
     ignored: u28,
     gpio14: resistorSelect,
     gpio15: resistorSelect,

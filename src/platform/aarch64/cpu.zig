@@ -2,31 +2,19 @@ const root = @import("root");
 const arm = @import("assembly.zig");
 const bsp = @import("root").bsp;
 
-pub fn entryPoint() callconv(.Naked) noreturn {
-    const core = asm volatile (
-        \\ mrs x1, MPIDR_EL1
-        \\ and x1, x1, 0b11
-        : [ret] "={x1}" (-> u64),
-        :
-        : "x1"
-    );
+fn prepareEL1Transition(boot_core_stack_end: u64) void {
+    arm.CNTHCTL_EL2.set(.{ .EL1PCTEN = 1, .EL1PCEN = 1 });
+    arm.CNTVOFF_EL2.set(0);
+    arm.SPSR_EL2.set(.{ .D = 1, .A = 1, .I = 1, .F = 1, .M = .EL1h });
+    arm.HCR_EL2.set(.{ .RW = .EL1IsAarch64 });
+    arm.SPSEL.set(.{ .SP = .ELx });
+    arm.SP_EL1.set(boot_core_stack_end);
+}
 
-    if (core != bsp.cpu.BOOT_CORE) {
-        hang();
-    }
-
-    // Set the stack pointer
-    asm volatile (
-        \\ adrp x0, __boot_core_stack_end_exclusive
-        \\ add x0, x0, #:lo12:__boot_core_stack_end_exclusive
-        \\ mov sp, x0
-    );
-
-    if (@typeInfo(@TypeOf(root.main)).Fn.return_type != noreturn) {
-        @compileError("expected return type of main to be 'noreturn'");
-    }
-
-    @call(.{ .modifier = .always_inline }, root.main, .{});
+pub fn kinit(phys_boot_core_stack_end_exclusive_addr: usize, main_addr: usize) callconv(.C) noreturn {
+    prepareEL1Transition(phys_boot_core_stack_end_exclusive_addr);
+    arm.ELR_EL2.set(main_addr);
+    arm.eret();
 }
 
 pub fn init() void {}
@@ -54,4 +42,8 @@ pub fn delay(cycles: usize) void {
     while (n < cycles) : (n += 1) {
         arm.nop();
     }
+}
+
+pub inline fn nop() void {
+    asm volatile ("nop");
 }

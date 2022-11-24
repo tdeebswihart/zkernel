@@ -1,7 +1,14 @@
-pub fn wfe() callconv(.Inline) void {
+pub usingnamespace @import("registers.zig");
+
+pub inline fn wfe() void {
     asm volatile ("wfe");
 }
 
-pub fn nop() callconv(.Inline) void {
+pub inline fn nop() void {
     asm volatile ("nop");
+}
+
+pub inline fn eret() noreturn {
+    asm volatile ("eret");
+    unreachable;
 }
