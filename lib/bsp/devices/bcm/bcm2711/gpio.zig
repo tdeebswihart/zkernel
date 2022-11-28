@@ -1,4 +1,4 @@
-pub const RegisterBank = @import("root").lib.mmio.RegisterBank;
+pub const RegisterBank = @import("../../../../libk.zig").mmio.RegisterBank;
 pub const resistorSelect = @import("../gpio.zig").resistorSelect;
 
 const GPIO = RegisterBank.at(0x7e20_0000);

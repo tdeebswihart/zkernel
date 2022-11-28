@@ -1,6 +1,5 @@
-const root = @import("root");
 const arm = @import("assembly.zig");
-const bsp = @import("root").bsp;
+const bsp = @import("../../libk.zig").bsp;
 
 fn prepareEL1Transition(boot_core_stack_end: u64) void {
     arm.CNTHCTL_EL2.set(.{ .EL1PCTEN = 1, .EL1PCEN = 1 });
@@ -46,4 +45,8 @@ pub fn delay(cycles: usize) void {
 
 pub inline fn nop() void {
     asm volatile ("nop");
+}
+
+comptime {
+    @import("std").testing.refAllDecls(@This());
 }

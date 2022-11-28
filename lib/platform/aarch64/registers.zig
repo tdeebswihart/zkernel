@@ -56,3 +56,7 @@ pub const HCR_EL2 = SysReg("hcr_el2", packed struct(u64) {
     } = .EL1IsAarch32,
     _rest: u31 = 0,
 });
+
+comptime {
+    @import("std").testing.refAllDecls(@This());
+}

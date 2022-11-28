@@ -23,3 +23,7 @@ pub fn init() void {
     board.gpio.setupUart();
     console.init();
 }
+
+comptime {
+    @import("std").testing.refAllDecls(@This());
+}

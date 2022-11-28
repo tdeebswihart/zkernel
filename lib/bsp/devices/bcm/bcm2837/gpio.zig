@@ -1,5 +1,6 @@
-pub const RegisterBank = @import("root").lib.mmio.RegisterBank;
-pub const cpu = @import("root").platform.cpu;
+const libk = @import("../../../../libk.zig");
+pub const RegisterBank = libk.mmio.RegisterBank;
+pub const cpu = libk.platform.cpu;
 
 const GPIO = RegisterBank.at(0x3F20_0000);
 
@@ -100,4 +101,8 @@ pub fn setupUart() void {
     });
 
     GPPUDCLK0.write(.{});
+}
+
+comptime {
+    @import("std").testing.refAllDecls(@This());
 }

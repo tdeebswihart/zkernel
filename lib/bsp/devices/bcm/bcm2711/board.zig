@@ -1,3 +1,4 @@
+pub const gpio = @import("gpio.zig");
 pub const MMIO_BASE = 0x3F000000;
 const MMIO_BANK = RegBank.base(0x3F000000);
 

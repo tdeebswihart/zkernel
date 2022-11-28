@@ -1,7 +1,8 @@
-const mmio = @import("root").lib.mmio;
+const libk = @import("../../../libk.zig");
+const mmio = libk.mmio;
 const RegisterBank = mmio.RegisterBank;
 const Register = mmio.Register(u32, u32);
-const cpu = @import("root").platform.cpu;
+const cpu = libk.platform.cpu;
 
 // TODO: make these proper structs and things
 pub const Offset = enum(u32) {

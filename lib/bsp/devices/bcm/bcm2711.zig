@@ -1,5 +1,5 @@
-const register = @import("root").lib.register;
-pub const RegisterBank = @import("root").lib.mmio.RegisterBank;
+const libk = @import("../../../libk.zig");
+pub const RegisterBank = libk.mmio.RegisterBank;
 pub const MMIO_BASE = 0x3F000000;
 const MMIO_BANK = RegisterBank(0x3F000000);
 
@@ -28,3 +28,7 @@ pub const MBOX_READ = MBOX_BANK.reg(0x00);
 pub const MBOX_CONFIG = MBOX_BANK.reg(0x1C);
 pub const MBOX_WRITE = MBOX_BANK.reg(0x20);
 pub const MBOX_STATUS = MBOX_BANK.reg(0x18);
+
+comptime {
+    @import("std").testing.refAllDecls(@This());
+}
